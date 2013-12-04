@@ -75,6 +75,7 @@ end
 if doui
     % in order to get a ui in matlab to return a variable is... HELL!
     cfg=bcg_correction_tool_ui(cfg);
+    pause(0.001); % the pause is necessary because then the window actually closes!
     if numel(cfg)==0
         varargout{1}=data;
         varargout{2}=cfg;
