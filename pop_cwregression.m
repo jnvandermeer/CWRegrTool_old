@@ -59,7 +59,9 @@ if numel(varargin)>7
     
 end
 
-
+% build up the command for EEGLAB... this doesn't do anythng (yet!) U can
+% 'eval' this later on by copy-pasting the command from EEG.history into a
+% script or in the matlab command window.
 command = sprintf('EEG = pop_cwregression(%s, %d, %f, %f, %d, \''%s\'', [','EEG',EEG.srate,windowduration,delay,taperingfactor,func2str(taperingfunction));
 for i_reg=1:numel(regressorinds)
     command = [command sprintf('%d ',regressorinds(i_reg))];

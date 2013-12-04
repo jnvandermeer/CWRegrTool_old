@@ -1,5 +1,0 @@
-out = function_to_optimize(y,in,in0);
-
-
-out = sum(y - my_poly(1:numel(y),in));
-
