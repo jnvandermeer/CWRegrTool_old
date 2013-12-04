@@ -1,0 +1,36 @@
+function prepare_sliding_bcg_correction
+% make it cfg.bcgcorr.srate
+% etc etc.
+
+% en d of data.
+% this is a simple wrapper function that enables you to 
+% give up all the desired parameters.
+% this should do the actual correction.
+% first determine the window compared to the sampling rate.
+
+
+DATAMATRIX=rand(40,10000,'single');
+% genereer een popup zodat je dit allemaal kan veranderen.
+% als dingen al gedefinieerd zijn, staan ze al ingevuld!
+% als alles al klaar staat kan je zeggen dat je geen popup wil.
+srate=1000; % in Hz.
+windowtime=2; % in seconds.
+delay_in_seconds = 0.050; % 50 msec!!
+datachannels=[1:10]; % channel indices for data.
+regchannels=[11 12]; % channel indices for regressors.
+taper_factor=[1,2,3]; % more makes it quadratically slower.
+windowfunction=@hann; % function for generating my window!
+
+% roep de uitvoerende functie aan (die overziet hoe het proces verloopt)
+data.matrix=
+
+cfg.cwregression.srate=
+cfg.cwregression.windowtime=
+cfg.cwregression.delay=
+cfg.cwregression.taperfactor=
+cfg.cwregression.windowfunction=
+
+
+
+% also determine what the delay_in_samples is!
+[data,cfg] = do_sliding_bcg_correction(data,cfg);
