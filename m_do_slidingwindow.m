@@ -8,7 +8,16 @@
 function [data,cfg]=m_do_slidingwindow(data,cfg)
 
 
+
 cwregression=cfg.cwregression;
+
+if isfield(cwregression,'do_logging');
+    do_logging = cwregression.do_logging;
+else
+    do_logging = 0;
+end
+
+
 
 % as input we have the data matrix, and the regressor matrix.
 % we have sampling rate
@@ -63,7 +72,7 @@ while current_sample < size(x,2) - number_of_samples_in_window;
     xpart = x(:,range);
     regspart = regs(:,range);
     
-    [fittedregs logging]=tools.fit_regmat_to_signalmat(xpart,regspart,[],delay_in_samples,[]);
+    [fittedregs logging]=tools.fit_regmat_to_signalmat(xpart,regspart,[],delay_in_samples,[],do_logging);
     
     subtracted_signals(:,range(1:end-1)) = fittedregs(:,1:end-1);
     

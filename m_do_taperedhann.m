@@ -12,28 +12,47 @@ function [data,cfg]=m_do_taperedhann(data,cfg)
 % smaller.
 
 
-verbose=0;
+
+
+% verbose=0;
 
 cwregression=cfg.cwregression;
+
+if isfield(cwregression,'do_logging');
+    do_logging = cwregression.do_logging;
+else
+    do_logging = 0;
+end
+
 
 % as input we have the data matrix, and the regressor matrix.
 % we have sampling rate
 % we have the length of the window in sec
 % we have the amount of temporal delay in sec
 
+taper_factor = cwregression.taperingfactor;
+
 function_to_calculate_nwindows=@(x) 2*(2^x-1)+1;
-nwindows=function_to_calculate_nwindows(cwregression.taperingfactor);
+nwindows=function_to_calculate_nwindows(taper_factor);
 % do some complicated arithmatics to make sure that the boundaries of the
 % tapering windows always falls on a sample (and not between samples, as
 % then the sum would no longer hold...
 % iteratively add (length) in samples to obtain this result.
-taper_factor = cwregression.taperingfactor;
+
 
 number_of_samples_in_window = floor(cwregression.srate*cwregression.windowduration + 1);
-window=cwregression.taperingfunction(number_of_samples_in_window);
 while rem((number_of_samples_in_window-1)/2^taper_factor,1)>0
     number_of_samples_in_window = number_of_samples_in_window + 1;
 end
+
+% this was a buuug!
+window=cwregression.taperingfunction(number_of_samples_in_window);
+
+% bugfix for own custum windows...
+if size(window,1)==1
+    window=window';
+end
+
 nsteps = 2^taper_factor;
 step_in_samples = (number_of_samples_in_window - 1) / nsteps;
 % division_factor = taper_factor;
@@ -44,11 +63,15 @@ for i=1:(nsteps-1)
     begins_segments(end+1) = begins_segments(end) + step_in_samples;
 end
 
+% how long is one step?
 delay_in_samples = floor(cwregression.srate*cwregression.delay);
+
+% how much should we divide by -- note this would need updating probably!
 division_factor = 2^(taper_factor-1);
 
+
 x=data.matrix(cwregression.channelinds,:);
-regs=data.matrix(cfg.cwregression.regressorinds,:);
+regs=data.matrix(cwregression.regressorinds,:);
 
 if taper_factor==0
     disp('no subtraction will occur; taper factor is zero (should be >=1)!');
@@ -97,21 +120,24 @@ summation=zeros(numel(cwregression.channelinds),step_in_samples+1,class(x));
 summation_weights=zeros(step_in_samples+1,1,class(x));
 
 % this was for plotting it!!
-summatrix_check=zeros(2,step_in_samples+1,class(x));
+% summatrix_check=zeros(2,step_in_samples+1,class(x));
 
 
 % if you later decide to skip certain bad fits/windows, the division needs
 % to be accounted for separately. Since this is a bit more complicated, we
 % now divide (see later on) by 2^(taper_factor-1) and leave it at that.
 % for this purpose, matrix_weights_fits would exist (see commented code).
-jcheck=0;
-max_windows = round(size(data.matrix,2) / step_in_samples);
+
+
+jcheck=0; % just a counter...
+
+max_windows = round(size(data.matrix,2) / step_in_samples) - 2^taper_factor;
 current_sample = 1;
-try
+% try
 while current_sample < size(x,2) - number_of_samples_in_window;
     
     jcheck=jcheck+1;
-    fprintf('doing window: %d out of %d \n',jcheck,max_windows);
+    fprintf('doing window: %d out of approx. %d \n',jcheck,max_windows);
     
     % what does this select??
     range = current_sample:(current_sample+number_of_samples_in_window-1);
@@ -153,25 +179,33 @@ while current_sample < size(x,2) - number_of_samples_in_window;
             % let's see how things turn out now.
             % and of course, in the beginning I take only the rising flank
             % and the rest was 0.
-            summatrix_check(i,:) = matrix_stored_fits(1,sumrange,i);
+            % summatrix_check(i,:) = matrix_stored_fits(1,sumrange,i);
             
             % summatrix_check(i,:) = matrix_stored_weights(sumrange,i);
             
             
         end
-        % again, just for me to check it...
-        if verbose
-        if jcheck<8
-            figure;plot(summatrix_check');
-            ylim([-0.5 0.5]);
-            legend({'1','2','3','4'});
-            jcheck=jcheck+1;
-        end
-        end
+        %         % again, just for me to check it...
+        %         if verbose
+        %         if jcheck<8
+        %             figure;plot(summatrix_check');
+        %             ylim([-0.5 0.5]);
+        %             legend({'1','2','3','4'});
+        %             jcheck=jcheck+1;
+        %         end
+        %         end
         
         % divide it by how much the sum should be (!)
-        summation=summation/2^(taper_factor-1);
-        summation_weights=summation_weights/2^(taper_factor-1);
+        % summation=summation/2^(taper_factor-1);
+        % summation=summation/2^(taper_factor-1);
+        % inspect summation
+        % inspect summation_weights
+        % maybe NOT assign subtracted_signals_weights??
+        
+        % maybe here divide by something like subtracted_signals_weights or
+        % so...
+        
+        % summation_weights=summation_weights/2^(taper_factor-1);
         
         % subtract that signal from the data.. in the correct range!!
         subtractrange = (current_sample-step_in_samples+1):current_sample;
@@ -189,7 +223,11 @@ while current_sample < size(x,2) - number_of_samples_in_window;
     % do a new window;
     xpart = x(:,range);
     regspart = regs(:,range);
-    [fittedregs logging]=tools.fit_regmat_to_signalmat(xpart,regspart,window,delay_in_samples,[]);
+    
+
+
+    
+    [fittedregs logging]=tools.fit_regmat_to_signalmat(xpart,regspart,window,delay_in_samples,[],do_logging);
     % do fifo rule! (% shift the windows backwards)
     % shift it (carefully, without (hopefully) overwriting stuff.
     for im=(size(matrix_stored_fits,3)):-1:2;
@@ -217,10 +255,29 @@ while current_sample < size(x,2) - number_of_samples_in_window;
     current_sample = current_sample+step_in_samples;
     
 end
-catch
-    keyboard;
-end
+% catch
+   %  keyboard;
+%end
+
+% inspect subtracted_signals
+% inspect subtracted_signals_weights!!
+% keyboard;
+
+% test with this window: a sawtooth!
+% otherw = @(x) ((2*x - (1:x))+0.5)/2/x;
+
+% and here... we subtract!
+% in the python RT application, this should be done inside the loop itself
+% already.
+
+% so.. this is how to do it!!!
+inds = subtracted_signals_weights>0;
+subtracted_signals(:,inds) = subtracted_signals(:,inds) ./ (ones(size(x,1),1) * (subtracted_signals_weights(inds)'));
+
+
 
 
 cfg.cwregression.logging = store_logging;
 data.subtracted_data = subtracted_signals;
+% will log information about window strength, etc...
+data.subtracted_data_weights = subtracted_signals_weights;

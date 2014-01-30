@@ -23,7 +23,16 @@ function [data,cfg]=m_do_everything(data,cfg)
 
 
 
+% cwregression=cfg.cwregression;
+
 cwregression=cfg.cwregression;
+
+if isfield(cwregression,'do_logging');
+    do_logging = cwregression.do_logging;
+else
+    do_logging = 0;
+end
+
 
 
 
@@ -35,7 +44,7 @@ regs=data.matrix(cfg.cwregression.regressorinds,:);
 
 window=[];
 
-[subtracted_signals logging]=tools.fit_regmat_to_signalmat(x,regs,window,delay_in_samples,[]);
+[subtracted_signals logging]=tools.fit_regmat_to_signalmat(x,regs,window,delay_in_samples,[],do_logging);
 
 cfg.cwregression.logging = {logging};
 data.subtracted_data = subtracted_signals;

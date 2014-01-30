@@ -1,4 +1,4 @@
-function [ EEGOUT, command ] = pop_cwregression( EEG ,varargin)
+function [ EEGOUT, command ] = pop_cwregression_diagnostical( EEG ,varargin)
 %  UNTITLED1 Summary of this function goes here
 %  Detailed explanation goes here
 
@@ -31,20 +31,21 @@ if numel(varargin)==0
     channelinds = mark;
     method='taperedhann';
     doui=1;
+    do_logging=1;
     
     
-    [data cfg] = run_cwregression(EEG.data,EEG.srate,windowduration,delay,taperingfactor,taperingfunction,regressorinds,channelinds,method,1);
+    
+    [data cfg] = run_cwregression_diagnostical(EEG.data,EEG.srate,windowduration,delay,taperingfactor,taperingfunction,regressorinds,channelinds,method,1,do_logging);
     % this will pop up a menu... so things might've changed since then...
     % (but the changed variables are passed on in cfg to m_do_... etc etc.
     
-    
-    % then restore from cfg all the stuff!
     
     if numel(cfg)==0
         EEGOUT = EEG;
         return;
     end
     
+    % then restore from cfg all the stuff!
     srate               = cfg.cwregression.srate;       %srate=1000;
     windowduration      = cfg.cwregression.windowduration;       %windowduration=2.0;
     delay               = cfg.cwregression.delay;         %delay=0.050;
@@ -58,27 +59,7 @@ if numel(varargin)==0
     
 end
 
-% without a gui, directly doing the correction is the following:
-if numel(varargin)>7
-    
-    srate = varargin{1}; %srate=1000;
-    windowduration = varargin{2}; %windowduration=2.0;
-    delay = varargin{3}; %delay=0.050;
-    taperingfactor = varargin{4}; %taperingfactor=1;
-    taperingfunction = str2func(varargin{5}); %taperingfunction=@hann;
-    regressorinds = varargin{6}; %regressorinds=1:30;
-    channelinds = varargin{7}; %channelinds=33:40;
-    method = varargin{8}; %channelinds=33:40;
 
-    if numel(varargin)==9
-        doui=varargin{9};
-    else
-        doui=1;
-    end
-
-    [data cfg] = run_cwregression(EEG.data,EEG.srate,windowduration,delay,taperingfactor,taperingfunction,regressorinds,channelinds,method,doui);
-    
-end
 
 % build up the command for EEGLAB... this doesn't do anythng (yet!) U can
 % 'eval' this later on by copy-pasting the command from EEG.history into a
@@ -111,7 +92,7 @@ EEG.data(channelinds,:) = EEG.data(channelinds,:) - data.subtracted_data;
 % give the diagnostical data, too.
 EEG.cwregression.cfg=cfg;
 
-EEG=pop_editset(EEG, 'setname', ['CWcorr ' EEG.setname]);
+EEG=pop_editset(EEG, 'setname', ['CWcorr_with_logs ' EEG.setname]);
 
 EEG.cwregression.cfg = cfg;
 
