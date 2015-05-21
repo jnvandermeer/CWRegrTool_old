@@ -63,7 +63,7 @@ elseif numel(varargin)==1
 
     cfg.cwregression.srate = []; %srate=1000;
     cfg.cwregression.windowduration = 2.000; %windowduration=2.0;
-    cfg.cwregression.delay = 0.050; %delay=0.050;
+    cfg.cwregression.delay = 0.021; %delay=0.050;
     cfg.cwregression.taperingfactor = 1; %taperingfactor=1;
     cfg.cwregression.taperingfunction = @hann; %taperingfunction=@hann;
     cfg.cwregression.regressorinds = []; %regressorinds=1:30;
